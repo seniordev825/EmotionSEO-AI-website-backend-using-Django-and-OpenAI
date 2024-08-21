@@ -73,6 +73,7 @@ class PostView(APIView):
     def get(self, request):
         
      user = request.user
+        
      user=User.objects.get(pk=user.id)
      
      if user.email=="miriamlaof@gmail.com":
