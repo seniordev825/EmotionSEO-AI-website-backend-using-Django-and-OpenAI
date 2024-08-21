@@ -71,11 +71,8 @@ class RegisterView(generics.GenericAPIView):
 
 class PostView(APIView):
     def get(self, request):
-        
-     user = request.user
-        
-     user=User.objects.get(pk=user.id)
-     
+     user = request.user      
+     user=User.objects.get(pk=user.id)    
      if user.email=="miriamlaof@gmail.com":
             key1 = request.GET.get('subject')
             key2 = request.GET.get('url')
