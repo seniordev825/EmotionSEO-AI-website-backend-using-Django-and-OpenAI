@@ -47,17 +47,20 @@ import json
 import base64
 from dotenv import load_dotenv 
 load_dotenv()
-#api_key = os.getenv('OPENAI_KEY')
+api_key = os.getenv('OPENAI_KEY')
 client = OpenAI(
     api_key = api_key
 )
 
 
 
+
+
+
+
 class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     def post(self,request):
-        
         user=request.data
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -69,130 +72,143 @@ class RegisterView(generics.GenericAPIView):
         user_data = serializer.data
         return Response(user_data, status=status.HTTP_201_CREATED)
 
-class PostView(APIView):
+def functionPromptPostUrlEnglish(subject, url, emotion, language, socialType):
+    prompt=f'''Write a post for {socialType} in English. The post must include the site information with {url}. Post should not be too long.
+Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {socialType} marketing.
+The post must include emoticons. The content must be optimized for SEO. The post must be written with {emotion}.
+The topic of this post should be {subject} and do not change or add anything.
+The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
+We want this content to be highly searchable.'''
+    return prompt
+
+def functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType):
+    prompt=f'''Write a post for {socialType} in English. Post should not be too long.
+Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {socialType} marketing.
+The post must include emoticons. The content must be optimized for SEO. The post must be written with {emotion}.
+The topic of this post should be {subject} and do not change or add anything.
+The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
+We want this content to be highly searchable.'''
+    return prompt
+
+def functionPromptPostUrlSpanish(subject, url, emotion, language, socialType):
+    prompt=f'''Escribe un post para {socialType} en Español. El post debe incluir la información del sitio con {url}. El post no debe ser muy largo
+Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {socialType} efectivo.
+El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {emotion}.
+El tema de esta publicación debe ser {subject} y no cambie ni agregue nada.
+La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
+Queremos que este contenido sea altamente buscable.'''
+    return prompt
+
+def functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType):
+    prompt=f'''Escribe un post para {socialType} en Español. El post no debe ser muy largo
+Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {socialType} efectivo.
+El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {emotion}.
+El tema de esta publicación debe ser {subject} y no cambie ni agregue nada.
+La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
+Queremos que este contenido sea altamente buscable.'''
+    return prompt
+
+
+class PostView(APIView):   ## APIView for social media post
     def get(self, request):
-     user = request.user      
-     user=User.objects.get(pk=user.id)    
-     if user.email=="miriamlaof@gmail.com":
-            key1 = request.GET.get('subject')
-            key2 = request.GET.get('url')
-            key3=request.GET.get('checkedValues')
-            key4=request.GET.get('language')
-            key5=request.GET.get('post')
-            if key4=="English":
-             if key2!="":
-              prompt = f'''Write a post for {key5} in English. The post must include the site information with {key2}. Post should not be too long.
-Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {key5} marketing.
-The post must include emoticons. The content must be optimized for SEO. The post must be written with {key3}.
-The topic of this post should be {key1} and do not change or add anything.
-The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
-We want this content to be highly searchable.'''
-             elif key2=="":
-                prompt = f'''Write a post for {key5} in English. Post should not be too long.
-Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {key5} marketing.
-The post must include emoticons. The content must be optimized for SEO. The post must be written with {key3}.
-The topic of this post should be {key1} and do not change or add anything.
-The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
-We want this content to be highly searchable.'''
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             content = res.choices[0].message.content
-
-             
-             if content[-1]==",":
-              a=content  
-              a[-1]=="."
-              
-              return Response({"message": a}, status=status.HTTP_200_OK)
-             elif content[-1]!=',' and content[-1]!='.':
-              b=content  
-              b=b+"."
-              
-              return Response({"message": b}, status=status.HTTP_200_OK)
-             elif content[-1]=='.':
-               c=content  
-               
-               return Response({"message": c}, status=status.HTTP_200_OK)
-            elif key4=="Spanish":
-             if key2!="":
-
-                  prompt = f'''Escribe un post para {key5} en Español. El post debe incluir la información del sitio con {key2}. El post no debe ser muy largo
-Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {key5} efectivo.
-El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {key3}.
-El tema de esta publicación debe ser {key1} y no cambie ni agregue nada.
-La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
-Queremos que este contenido sea altamente buscable.'''
-             elif key2=="":
-                prompt = f'''Escribe un post para {key5} en Español. El post no debe ser muy largo
-Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {key5} efectivo.
-El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {key3}.
-El tema de esta publicación debe ser {key1} y no cambie ni agregue nada.
-La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
-Queremos que este contenido sea altamente buscable.'''
-
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             content = res.choices[0].message.content
-             
-
-             
-              
-
+     user = request.user
+     user=User.objects.get(pk=user.id)
+     
+     if user.email=="miriamlaof@gmail.com":   ## in case of the site's owner
+            subject = request.GET.get('subject')
+            url = request.GET.get('url')
+            emotion= request.GET.get('checkedValues')
+            language= request.GET.get('language')
+            socialType = request.GET.get('post')
             
-             if content[-1]==",":
-              a=content  
-              a[-1]=="."
-              
-              return Response({"message": a}, status=status.HTTP_200_OK)
-             elif content[-1]!=',' and content[-1]!='.':
-              b=content  
-              b=b+"."
-              
-              return Response({"message": b}, status=status.HTTP_200_OK)
-             elif content[-1]=='.':
-               c=content  
-               
-               return Response({"message": c}, status=status.HTTP_200_OK)
+            promptPostUrlEnglish = functionPromptPostUrlEnglish(subject, url, emotion, language, socialType)
+            promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
 
-     elif user.email!="miriamlaof@gmail.com":
-        if user.usage_count < 3:
+            promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
+
+            promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
+
+            if language=="English":
+             if url!="":
+              promptEnglish = promptPostUrlEnglish
+             elif url=="":
+              promptEnglish = promptPostNonUrlEnglish
+              res=client.chat.completions.create(
+         model = "gpt-4-1106-preview",
+         max_tokens = 1048,
+        messages = [
+            {"role": "system", "content": 'You write text based on my prompt.'
+            },
+            {"role": "user", "content": promptEnglish},
+        ]
+    )
+              generatedPost = res.choices[0].message.content
+
+             
+              if generatedPost[-1]==",": ## This means that the last of the sentence is ",".
+               generatedPost=generatedPost  
+               generatedPost[-1]=="."    
+              
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+              elif generatedPost[-1]!=',' and generatedPost[-1]!='.': ## wrong sentence
+               generatedPost=generatedPost  
+               generatedPost=generatedPost+"."
+              
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+              elif generatedPost[-1]=='.':    ## correct sentence
+               generatedPost=generatedPost  
+               
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+            elif language=="Spanish":
+             if url!="":
+
+                  promptSpanish = promptPostUrlSpanish
+             elif url=="":
+                promptSpanish = promptPostNonUrlSpanish
+             res=client.chat.completions.create(
+         model = "gpt-4-1106-preview",
+         max_tokens = 1048,
+        messages = [
+            {"role": "system", "content": 'You write text based on my prompt.'
+            },
+            {"role": "user", "content": promptSpanish},
+        ]
+    )
+             generatedPost = res.choices[0].message.content
+            
+             if generatedPost[-1]==",":
+              generatedPost=generatedPost  
+              generatedPost[-1]=="."
+              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
+              generatedPost=generatedPost  
+              generatedPost=generatedPost+"."
+              
+              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]=='.':
+               generatedPost=generatedPost  
+               
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+
+     elif user.email!="miriamlaof@gmail.com":     ## In case of the person that is not site's owner
+        if user.usage_count < 3:     ## Users can use this service 3 times free
        
             user.usage_count += 1
             user.save()
-            key1 = request.GET.get('subject')
-            key2 = request.GET.get('url')
-            key3=request.GET.get('checkedValues')
-            key4=request.GET.get('language')
-            key5=request.GET.get('post')
-            if key4=="English":
-             if key2!="":
-              prompt = f'''Write a post for {key5} in English. The post must include the site information with {key2}. Post should not be too long.
-Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {key5} marketing.
-The post must include emoticons. The content must be optimized for SEO. The post must be written with {key3}.
-The topic of this post should be {key1} and do not change or add anything.
-The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
-We want this content to be highly searchable.'''
-             elif key2=="":
-                prompt = f'''Write a post for {key5} in English. Post should not be too long.
-Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {key5} marketing.
-The post must include emoticons. The content must be optimized for SEO. The post must be written with {key3}.
-The topic of this post should be {key1} and do not change or add anything.
-The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
-We want this content to be highly searchable.'''
+            subject = request.GET.get('subject')
+            url = request.GET.get('url')
+            emotion=request.GET.get('checkedValues')
+            language=request.GET.get('language')
+            socialType=request.GET.get('post')
+            promptPostUrlEnglish = functionPromptPostUrlEnglish(subject, url, emotion, language, socialType)
+            promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
+            promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
+            promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
+            if language=="English":
+             if url!="":
+              promptEnglish = promptPostUrlEnglish
+             elif url=="":
+                promptEnglish = promptPostNonUrlEnglish
              res=client.chat.completions.create(
          model = "gpt-4-1106-preview",
          max_tokens = 1048,
@@ -202,37 +218,27 @@ We want this content to be highly searchable.'''
             {"role": "user", "content": prompt},
         ]
     )
-             content = res.choices[0].message.content
-             if content[-1]==",":
-              a=content  
-              a[-1]=="."
+             generatedPost = res.choices[0].message.content
+             if generatedPost[-1]==",":
+              generatedPost=generatedPost  
+              generatedPost[-1]=="."
               
-              return Response({"message": a}, status=status.HTTP_200_OK)
-             elif content[-1]!=',' and content[-1]!='.':
-              b=content  
-              b=b+"."
+              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
+              generatedPost=generatedPost  
+              generatedPost=generatedPost+"."
               
-              return Response({"message": b}, status=status.HTTP_200_OK)
-             elif content[-1]=='.':
-               c=content  
+              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]=='.':
+               generatedPost=generatedPost  
                
-               return Response({"message": c}, status=status.HTTP_200_OK)
-            elif key4=="Spanish":
-             if key2!="":
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+            elif language=="Spanish":
+             if url!="":
 
-                  prompt = f'''Escribe un post para {key5} en Español. El post debe incluir la información del sitio con {key2}. El post no debe ser muy largo
-Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {key5} efectivo.
-El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {key3}.
-El tema de esta publicación debe ser {key1} y no cambie ni agregue nada.
-La última frase del post debe ser una frase significativa y completa.. La última frase debe terminar con un punto. Añade los hashtags adecuados.
-Queremos que este contenido sea altamente buscable.'''
+                  prompt =  functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
              elif key2=="":
-                prompt = f'''Escribe un post para {key5} en Español. El post no debe ser muy largo
-Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {key5} efectivo.
-El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {key3}.
-El tema de esta publicación debe ser {key1} y no cambie ni agregue nada.
-La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
-Queremos que este contenido sea altamente buscable.'''
+                prompt =  functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
              res=client.chat.completions.create(
          model = "gpt-4-1106-preview",
          max_tokens = 1048,
@@ -248,28 +254,53 @@ Queremos que este contenido sea altamente buscable.'''
              return Response({"message": "free"}, status=status.HTTP_201_CREATED)
 
         elif user.usage_count >=3 and (user.subscribed==True and user.word_number<user.word_limit):
-            key1 = request.GET.get('subject')
-            key2 = request.GET.get('url')
-            key3=request.GET.get('checkedValues')
-            key4=request.GET.get('language')
-            key5=request.GET.get('post')
+            subject = request.GET.get('subject')
+            url = request.GET.get('url')
+            emotion=request.GET.get('checkedValues')
+            language=request.GET.get('language')
+            socialType=request.GET.get('post')
+            promptPostUrlEnglish = functionPromptPostUrlEnglish(subject, url, emotion, language, socialType)
+            promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
+            promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
+            promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
 
-            if key4=="English":
+            if language=="English":
 
-             if key2!="":
-              prompt = f'''Write a post for {key5} in English. The post must include the site information with {key2}. Post should not be too long.
-Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {key5} marketing.
-The post must include emoticons. The content must be optimized for SEO. The post must be written with {key3}.
-The topic of this post should be {key1} and do not change or add anything.
-The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
-We want this content to be highly searchable.'''
-             elif key2=="":
-                prompt = f'''Write a post for {key5} in English. Post should not be too long.
-Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {key5} marketing.
-The post must include emoticons. The content must be optimized for SEO. The post must be written with {key3}.
-The topic of this post should be {key1} and do not change or add anything.
-The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
-We want this content to be highly searchable.'''
+             if url!="":
+              prompt = promptPostUrlEnglish
+             elif url=="":
+                prompt = promptPostNonUrlEnglish
+             res=client.chat.completions.create(
+         model = "gpt-4-1106-preview",
+         max_tokens = 1048,
+        messages = [
+            {"role": "system", "content": 'You write text based on my prompt.'
+            },
+            {"role": "user", "content": prompt},])   
+             generatedPost = res.choices[0].message.content
+             if generatedPost[-1]==",":
+               generatedPost=generatedPost  
+               generatedPost[-1]=="."
+               user.word_number=user.word_number+len(generatedPost.split())
+               user.save()
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
+               generatedPost=generatedPost  
+               generatedPost=generatedPost+"."
+               user.word_number=user.word_number+len(generatedPost.split())
+               user.save()
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]=='.':
+               generatedPost=generatedPost  
+               user.word_number=user.word_number+len(generatedPost.split())
+               user.save()
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+            elif language=="Spanish":
+             if url!="":
+
+                  prompt = promptPostUrlSpanish
+             elif url=="":
+                prompt = promptPostNonUrlSpanish
              res=client.chat.completions.create(
          model = "gpt-4-1106-preview",
          max_tokens = 1048,
@@ -279,91 +310,44 @@ We want this content to be highly searchable.'''
             {"role": "user", "content": prompt},
         ]
     )
-             if content[-1]==",":
-              a=content  
-              a[-1]=="."
-              user.word_number=user.word_number+len(content.split())
+             generatedPost = res.choices[0].message.content
+             if generatedPost[-1]==",":
+              generatedPost=generatedPost  
+              generatedPost[-1]=="."
+              user.word_number=user.word_number+len(generatedPost.split())
               user.save()
-              return Response({"message": a}, status=status.HTTP_200_OK)
-             elif content[-1]!=',' and content[-1]!='.':
-              b=content  
-              b=b+"."
-              user.word_number=user.word_number+len(content.split())
+              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
+              generatedPost=generatedPost  
+              generatedPost=generatedPost+"."
+              user.word_number=user.word_number+len(generatedPost.split())
               user.save()
-              return Response({"message": b}, status=status.HTTP_200_OK)
-             elif content[-1]=='.':
-               c=content  
-               user.word_number=user.word_number+len(content.split())
+              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]=='.':
+               generatedPost=generatedPost  
+               user.word_number=user.word_number+len(generatedPost.split())
                user.save()
-               return Response({"message": c}, status=status.HTTP_200_OK)
-            elif key4=="Spanish":
-             if key2!="":
-
-                  prompt = f'''Escribe un post para {key5} en Español. El post debe incluir la información del sitio con {key2}. El post no debe ser muy largo
-Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {key5} efectivo.
-El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {key3}.
-El tema de esta publicación debe ser {key1} y no cambie ni agregue nada.
-La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
-Queremos que este contenido sea altamente buscable.'''
-             elif key2=="":
-                prompt = f'''Escribe un post para {key5} en Español. El post no debe ser muy largo
-Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {key5} efectivo.
-El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {key3}.
-El tema de esta publicación debe ser {key1} y no cambie ni agregue nada.
-La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
-Queremos que este contenido sea altamente buscable.'''
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             content = res.choices[0].message.content
-             if content[-1]==",":
-              a=content  
-              a[-1]=="."
-              user.word_number=user.word_number+len(content.split())
-              user.save()
-              return Response({"message": a}, status=status.HTTP_200_OK)
-             elif content[-1]!=',' and content[-1]!='.':
-              b=content  
-              b=b+"."
-              user.word_number=user.word_number+len(content.split())
-              user.save()
-              return Response({"message": b}, status=status.HTTP_200_OK)
-             elif content[-1]=='.':
-               c=content  
-               user.word_number=user.word_number+len(content.split())
-               user.save()
-               return Response({"message": c}, status=status.HTTP_200_OK)
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
         elif (user.usage_count==3 and user.word_number==0 )and (user.subscribed==False and user.word_number<user.word_limit):
             return Response({"message": "free"}, status=status.HTTP_201_CREATED)
 
         elif (user.usage_count==3 and user.word_number!=0 )and (user.subscribed==False and user.word_number<user.word_limit):
-            key1 = request.GET.get('subject')
-            key2 = request.GET.get('url')
-            key3=request.GET.get('checkedValues')
-            key4=request.GET.get('language')
-            key5=request.GET.get('post')
-            if key4=="English":
+            subject = request.GET.get('subject')
+            url= request.GET.get('url')
+            emotion=request.GET.get('checkedValues')
+            language=request.GET.get('language')
+            socialType=request.GET.get('post')
+            promptPostUrlEnglish = functionPromptPostUrlEnglish(subject, url, emotion, language, socialType)
+            promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
+            promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
+            promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
 
-             if key2!="":
-              prompt = f'''Write a post for {key5} in English. The post must include the site information with {key2}. Post should not be too long.
-Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {key5} marketing.
-The post must include emoticons. The content must be optimized for SEO. The post must be written with {key3}.
-The topic of this post should be {key1} and do not change or add anything.
-The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
-We want this content to be highly searchable.'''
-             elif key2=="":
-                prompt = f'''Write a post for {key5} in English. Post should not be too long.
-Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {key5} marketing.
-The post must include emoticons. The content must be optimized for SEO. The post must be written with {key3}.
-The topic of this post should be {key1} and do not change or add anything.
-The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
-We want this content to be highly searchable.'''
+            if language=="English":
+
+             if url!="":
+              prompt = promptPostUrlEnglish
+             elif url=="":
+                prompt = promptPostNonUrlEnglish
              res=client.chat.completions.create(
          model = "gpt-4-1106-preview",
          max_tokens = 1048,
@@ -373,40 +357,30 @@ We want this content to be highly searchable.'''
             {"role": "user", "content": prompt},
         ]
     )
-             content = res.choices[0].message.content
-             if content[-1]==",":
-              a=content  
-              a[-1]=="."
-              user.word_number=user.word_number+len(content.split())
+             generatedPost = res.choices[0].message.content
+             if generatedPost[-1]==",":
+              generatedPost=generatedPost  
+              generatedPost[-1]=="."
+              user.word_number=user.word_number+len(generatedPost.split())
               user.save()
-              return Response({"message": a}, status=status.HTTP_200_OK)
-             elif content[-1]!=',' and content[-1]!='.':
-              b=content  
-              b=b+"."
-              user.word_number=user.word_number+len(content.split())
+              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
+              generatedPost=generatedPost  
+              generatedPost=generatedPost+"."
+              user.word_number=user.word_number+len(generatedPost.split())
               user.save()
-              return Response({"message": b}, status=status.HTTP_200_OK)
-             elif content[-1]=='.':
-               c=content  
-               user.word_number=user.word_number+len(content.split())
+              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]=='.':
+               generatedPost=generatedPost  
+               user.word_number=user.word_number+len(generatedPost.split())
                user.save()
-               return Response({"message": c}, status=status.HTTP_200_OK)
-            elif key4=="Spanish":
-             if key2!="":
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+            elif language=="Spanish":
+             if url!="":
 
-                  prompt = f'''Escribe un post para {key5} en Español. El post debe incluir la información del sitio con {key2}. El post no debe ser muy largo
-Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {key5} efectivo.
-El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {key3}.
-El tema de esta publicación debe ser {key1} y no cambie ni agregue nada.
-La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
-Queremos que este contenido sea altamente buscable.'''
-             elif key2=="":
-                prompt = f'''Escribe un post para {key5} en Español. El post no debe ser muy largo
-Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {key5} efectivo.
-El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {key3}.
-El tema de esta publicación debe ser {key1} y no cambie ni agregue nada.
-La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
-Queremos que este contenido sea altamente buscable.'''
+                  prompt = promptPostUrlSpanish
+             elif url=="":
+                prompt = promptPostNonUrlSpanish
              res=client.chat.completions.create(
          model = "gpt-4-1106-preview",
          max_tokens = 1048,
@@ -416,51 +390,45 @@ Queremos que este contenido sea altamente buscable.'''
             {"role": "user", "content": prompt},
         ]
     )
-             content = res.choices[0].message.content
-             print(content[-1])
-             if content[-1]==",":
-              a=content  
-              a[-1]=="."
-              user.word_number=user.word_number+len(content.split())
+             generatedPost = res.choices[0].message.content
+       
+             if generatedPost[-1]==",":
+              generatedPost=generatedPost  
+              generatedPost[-1]=="."
+              user.word_number=user.word_number+len(generatedPost.split())
               user.save()
-              return Response({"message": a}, status=status.HTTP_200_OK)
-             elif content[-1]!=',' and content[-1]!='.':
-              b=content  
-              b=b+"."
-              user.word_number=user.word_number+len(content.split())
+              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
+              generatedPost=generatedPost  
+              generatedPost=generatedPost+"."
+              user.word_number=user.word_number+len(generatedPost.split())
               user.save()
-              return Response({"message": b}, status=status.HTTP_200_OK)
-             elif content[-1]=='.':
-               c=content  
-               user.word_number=user.word_number+len(content.split())
+              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             elif generatedPost[-1]=='.':
+               generatedPost=generatedPost  
+               user.word_number=user.word_number+len(generatedPost.split())
                user.save()
-               return Response({"message": c}, status=status.HTTP_200_OK)
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
                 
 
                
             
         elif user.usage_count >3 and (user.subscribed==False and user.word_number<user.word_limit):
-            key1 = request.GET.get('subject')
-            key2 = request.GET.get('url')
-            key3=request.GET.get('checkedValues')
-            key4=request.GET.get('language')
-            key5=request.GET.get('post')
+            subject = request.GET.get('subject')
+            url = request.GET.get('url')
+            emotion=request.GET.get('checkedValues')
+            language=request.GET.get('language')
+            socialType=request.GET.get('post')
+            promptPostUrlEnglish = functionPromptPostUrlEnglish(subject, url, emotion, language, socialType)
+            promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
+            promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
+            promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
             if key4=="English":
 
-             if key2!="":
-              prompt = f'''Write a post for {key5} in English. The post must include the site information with {key2}. Post should not be too long.
-Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {key5} marketing.
-The post must include emoticons. The content must be optimized for SEO. The post must be written with {key3}.
-The topic of this post should be {key1} and do not change or add anything.
-The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
-We want this content to be highly searchable.'''
-             elif key2=="":
-                prompt = f'''Write a post for {key5} in English. Post should not be too long.
-Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {key5} marketing.
-The post must include emoticons. The content must be optimized for SEO. The post must be written with {key3}.
-The topic of this post should be {key1} and do not change or add anything.
-The last sentence of the post must be a meaningful and complete sentence. The last sentence must be ended a full stop. Add the appropriate hashtags.
-We want this content to be highly searchable.'''
+             if url!="":
+              prompt = promptPostUrlEnglish
+             elif url=="":
+                prompt = promptPostNonUrlEnglish
              res=client.chat.completions.create(
          model = "gpt-4-1106-preview",
          max_tokens = 1048,
@@ -474,23 +442,12 @@ We want this content to be highly searchable.'''
              user.word_number=user.word_number+len(content.split())
              user.save()
              return Response({"message": content}, status=status.HTTP_201_CREATED)
-            elif key4=="Spanish":
-             if key2!="":
+            elif language=="Spanish":
+             if url!="":
 
-                  prompt = f'''Escribe un post para {key5} en Español. El post debe incluir la información del sitio con {key2}. El post no debe ser muy largo
-Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {key5} efectivo.
-El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {key3}.
-El tema de esta publicación debe ser {key1} y no cambie ni agregue nada.
-La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
-Queremos que este contenido sea altamente buscable.'''
-             elif key2=="":
-                prompt = f'''Escribe un post para {key5} en Español. El post no debe ser muy largo
-Escribe el post para atraer al público objetivo, dar consejos, proporcionar valor inmediato y motivar una acción específica, lo cual es esencial para un marketing de {key5} efectivo.
-El post debe incluir emoticonos. El contenido debe estar optimizado para SEO. El post debe estar escrito con {key3}.
-El tema de esta publicación debe ser {key1} y no cambie ni agregue nada.
-La última frase del post debe ser una frase significativa y completa. La última frase debe terminar con un punto. Añade los hashtags adecuados.
-Queremos que este contenido sea altamente buscable.'''
-            
+                  prompt = promptPostUrlSpanish
+             elif url=="":
+                prompt = promptPostNonUrlSpanish
              res=client.chat.completions.create(
          model = "gpt-4-1106-preview",
          max_tokens = 1048,
