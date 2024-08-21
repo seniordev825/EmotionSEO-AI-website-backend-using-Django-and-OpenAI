@@ -5,6 +5,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 class RegisterSerializer(serializers.ModelSerializer):
+    
     password = serializers.CharField(max_length=68, min_length=6, write_only=True)
     class Meta:
         model = User
