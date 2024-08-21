@@ -1,0 +1,77 @@
+<html>
+<head>
+<style>
+    table {
+        width: 100%;
+        font-family:Arial
+      }
+      td{
+        font-size:15px
+      }
+      .a{
+        border-top:1px solid black;
+        margin-bottom:20px;
+        margin-top:40px;
+      }
+</style>
+<!-- <script src="https://cdn.tailwindcss.com"></script> -->
+</head>
+
+<body style="margin-left:30px">
+  <div>
+    <div>
+      <br>
+      
+      <div style="display: flex;">
+      <img src="http://16.171.17.14:3000/assets/logo192.png" alt="Logo" style="height: auto; width: 140px; align-items: center;">
+    
+      <h1 style="color: rgb(203, 14, 228); font-size: 20px; font-family:Arial, Helvetica, sans-serif; margin-top:10px">Emotionseo.ai</h1>
+      </div>
+     
+        <p><b>Closers Avenue SL</b><br/>
+        <b>C/ Pasteur 2</b><br/>
+        <b>08224 Barcelona</b><br/>
+        <b>VAT# 08224 Barcelona</b></p>
+        </div>
+        <div >
+        <div>
+        <p style="margin-top: 0px; margin-bottom: 0;">Client {{first_name}} {{last_name}}
+        <span style="margin-top: 0px; margin-bottom: 0; padding-left: 500px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Invoice Date: {{currenttime | date:'m/d/Y'}}</span></p>
+
+        </div>
+
+        <div >
+        <p style="margin-top: 0px; margin-bottom: 0;">{{home}}
+        <span style="margin-top: 0px; margin-bottom: 0;  padding-left: 500px; ">Due Date: {{currenttime |date:'m/d/Y'}}</span></p>
+        </div>
+        <p style="margin-top: 0px;">{{city}}<br/>
+        {{postalcode}}<br/>
+        Email: {{email}}</p>
+        </div>
+      </div>
+        <div style="text-align:center;font-size:30px;margin-bottom:20px">Invoice</div>
+        <table>
+            <tr style="background-color: rgb(54, 47, 54);height: 20px;  text-align: center;">
+              <td><b style="font-size: 15px; color: rgba(240, 242, 247, 0.966);">Description</b></td>
+              <td></td>
+              <td><b style="font-size: 15px; color: rgba(240, 242, 247, 0.966);">Qty</b></td>
+              <td><b style="font-size: 15px;color: rgba(240, 242, 247, 0.966);">Unit Price</b></td>
+              <td><b style="font-size: 15px; color: rgba(240, 242, 247, 0.966);">total</b></td>
+              
+            </tr>
+            <!-- {% for d2 in d2 %}
+            <tr>  
+              <td>{{d2.title}}</td>
+              <td></td>
+              <td>{{d2.quantity}}</td>
+              <td>{{d2.price}}</td>
+              <td>{{d2.subtotal}}</td>
+              <td>{{d2.tax}}({{d2.vat}}%)</td>
+            </tr>
+            {% endfor %} -->
+          </table>
+             
+         
+        </div>
+</body>
+</html>
