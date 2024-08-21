@@ -52,12 +52,6 @@ client = OpenAI(
     api_key = api_key
 )
 
-
-
-
-
-
-
 class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     def post(self,request):
@@ -119,15 +113,11 @@ class PostView(APIView):   ## APIView for social media post
             url = request.GET.get('url')
             emotion= request.GET.get('checkedValues')
             language= request.GET.get('language')
-            socialType = request.GET.get('post')
-            
+            socialType = request.GET.get('post')      
             promptPostUrlEnglish = functionPromptPostUrlEnglish(subject, url, emotion, language, socialType)
             promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
-
             promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
-
             promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
-
             if language=="English":
              if url!="":
               promptEnglish = promptPostUrlEnglish
@@ -142,26 +132,20 @@ class PostView(APIView):   ## APIView for social media post
             {"role": "user", "content": promptEnglish},
         ]
     )
-              generatedPost = res.choices[0].message.content
-
-             
+              generatedPost = res.choices[0].message.content          
               if generatedPost[-1]==",": ## This means that the last of the sentence is ",".
                generatedPost=generatedPost  
-               generatedPost[-1]=="."    
-              
+               generatedPost[-1]=="."               
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
               elif generatedPost[-1]!=',' and generatedPost[-1]!='.': ## wrong sentence
                generatedPost=generatedPost  
-               generatedPost=generatedPost+"."
-              
+               generatedPost=generatedPost+"."              
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
               elif generatedPost[-1]=='.':    ## correct sentence
                generatedPost=generatedPost  
-               
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              if url!="":
-
                   promptSpanish = promptPostUrlSpanish
              elif url=="":
                 promptSpanish = promptPostNonUrlSpanish
@@ -174,8 +158,7 @@ class PostView(APIView):   ## APIView for social media post
             {"role": "user", "content": promptSpanish},
         ]
     )
-             generatedPost = res.choices[0].message.content
-            
+             generatedPost = res.choices[0].message.content 
              if generatedPost[-1]==",":
               generatedPost=generatedPost  
               generatedPost[-1]=="."
@@ -186,13 +169,11 @@ class PostView(APIView):   ## APIView for social media post
               
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]=='.':
-               generatedPost=generatedPost  
-               
+               generatedPost=generatedPost        
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
 
      elif user.email!="miriamlaof@gmail.com":     ## In case of the person that is not site's owner
         if user.usage_count < 3:     ## Users can use this service 3 times free
-       
             user.usage_count += 1
             user.save()
             subject = request.GET.get('subject')
@@ -221,21 +202,17 @@ class PostView(APIView):   ## APIView for social media post
              generatedPost = res.choices[0].message.content
              if generatedPost[-1]==",":
               generatedPost=generatedPost  
-              generatedPost[-1]=="."
-              
+              generatedPost[-1]=="."    
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
               generatedPost=generatedPost  
-              generatedPost=generatedPost+"."
-              
+              generatedPost=generatedPost+"."     
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]=='.':
-               generatedPost=generatedPost  
-               
+               generatedPost=generatedPost        
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              if url!="":
-
                   prompt =  functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
              elif key2=="":
                 prompt =  functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
@@ -252,7 +229,6 @@ class PostView(APIView):   ## APIView for social media post
              return Response({"message": content}, status=status.HTTP_200_OK)
         elif user.usage_count >=3 and (user.subscribed==False and user.word_limit==0 ):
              return Response({"message": "free"}, status=status.HTTP_201_CREATED)
-
         elif user.usage_count >=3 and (user.subscribed==True and user.word_number<user.word_limit):
             subject = request.GET.get('subject')
             url = request.GET.get('url')
@@ -263,9 +239,7 @@ class PostView(APIView):   ## APIView for social media post
             promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
             promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
             promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
-
             if language=="English":
-
              if url!="":
               prompt = promptPostUrlEnglish
              elif url=="":
@@ -297,7 +271,6 @@ class PostView(APIView):   ## APIView for social media post
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              if url!="":
-
                   prompt = promptPostUrlSpanish
              elif url=="":
                 prompt = promptPostNonUrlSpanish
@@ -330,7 +303,6 @@ class PostView(APIView):   ## APIView for social media post
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
         elif (user.usage_count==3 and user.word_number==0 )and (user.subscribed==False and user.word_number<user.word_limit):
             return Response({"message": "free"}, status=status.HTTP_201_CREATED)
-
         elif (user.usage_count==3 and user.word_number!=0 )and (user.subscribed==False and user.word_number<user.word_limit):
             subject = request.GET.get('subject')
             url= request.GET.get('url')
@@ -341,9 +313,7 @@ class PostView(APIView):   ## APIView for social media post
             promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
             promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
             promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
-
             if language=="English":
-
              if url!="":
               prompt = promptPostUrlEnglish
              elif url=="":
@@ -377,7 +347,6 @@ class PostView(APIView):   ## APIView for social media post
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              if url!="":
-
                   prompt = promptPostUrlSpanish
              elif url=="":
                 prompt = promptPostNonUrlSpanish
@@ -391,7 +360,6 @@ class PostView(APIView):   ## APIView for social media post
         ]
     )
              generatedPost = res.choices[0].message.content
-       
              if generatedPost[-1]==",":
               generatedPost=generatedPost  
               generatedPost[-1]=="."
@@ -408,11 +376,7 @@ class PostView(APIView):   ## APIView for social media post
                generatedPost=generatedPost  
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
-               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-                
-
-               
-            
+               return Response({"message": generatedPost}, status=status.HTTP_200_OK)   
         elif user.usage_count >3 and (user.subscribed==False and user.word_number<user.word_limit):
             subject = request.GET.get('subject')
             url = request.GET.get('url')
@@ -424,7 +388,6 @@ class PostView(APIView):   ## APIView for social media post
             promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
             promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
             if key4=="English":
-
              if url!="":
               prompt = promptPostUrlEnglish
              elif url=="":
@@ -444,7 +407,6 @@ class PostView(APIView):   ## APIView for social media post
              return Response({"message": content}, status=status.HTTP_201_CREATED)
             elif language=="Spanish":
              if url!="":
-
                   prompt = promptPostUrlSpanish
              elif url=="":
                 prompt = promptPostNonUrlSpanish
@@ -461,17 +423,12 @@ class PostView(APIView):   ## APIView for social media post
              user.word_number=user.word_number+len(content.split())
              user.save()
              return Response({"message": content}, status=status.HTTP_200_OK)
-        
         elif user.word_number>=user.word_limit:            
             user.subscribed=False
             user.word_number=0
             user.save()
-    
             return Response({"message": "limit"}, status=status.HTTP_201_CREATED)    
-
-
-
-
+            
 async def make_request(url, data, headers):
     async with aiohttp.ClientSession() as session:
         async with session.post(url, json=data, headers=headers) as response:
