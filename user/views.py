@@ -48,29 +48,30 @@ import base64
 from dotenv import load_dotenv 
 load_dotenv()
 api_key = os.getenv('OPENAI_KEY')
-client = OpenAI(
-    api_key = api_key
-)
+client = OpenAI(api_key = api_key)
 
+def generatingContent(prompt):
+    res=client.chat.completions.create(
+         model = "gpt-4-1106-preview",
+         max_tokens = 1048,
+        messages = [
+            {"role": "system", "content": 'You write text based on my prompt.'
+            },
+            {"role": "user", "content": prompt},
+        ]
+    )
+    content = res.choices[0].message.content
+    return content
 
-
-
-
-
-
-class RegisterView(generics.GenericAPIView):
-    serializer_class = RegisterSerializer
-    def post(self,request):
-        user=request.data
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        otp = generate_otp()
-        serializer.validated_data['otp'] = otp
-        send_otp_email(serializer.validated_data['email'], otp)
-        serializer.save()
-        request.session['otp'] = otp
-        user_data = serializer.data
-        return Response(user_data, status=status.HTTP_201_CREATED)
+def contentChecking(content):
+    if content[-1]==",":                          ## This means that the last of the sentence is ",".         
+      content[-1]=="."                  
+               
+    elif content[-1]!=',' and content[-1]!='.':    ## wrong sentence               
+      content=content+"."                           
+    elif content[-1]=='.':                         ## correct sentence  
+      content=content             
+    return content
 
 def functionPromptPostUrlEnglish(subject, url, emotion, language, socialType):
     prompt=f'''Write a post for {socialType} in English. The post must include the site information with {url}. Post should not be too long.
@@ -108,87 +109,80 @@ La última frase del post debe ser una frase significativa y completa. La últim
 Queremos que este contenido sea altamente buscable.'''
     return prompt
 
+def funtionPromptArticleEnglish(title, keyword, emotion, language):
+    prompt = f'''Write article in English. The article must be SEO-Optmized Content and the article must be included {keyword}
+        The article must be written with {emotion}.The article should typically contain 750 words. The last sentence of article must be a meaningfull and complete sentence. The last sentence must be ended a full stop.
+        The title of article must be {title} and don't change or add anything and write with bigger font than content!
+        We want this content to be high searchable.
+        Write the article naturally and avoid comments or words(for example: SEO-Optimized Content) that are not related to the topic.
+        Don't involve unnecessary symbols such as ---, ###, **, and so on.
+        Add line breaks, dashes and indentations to make the article easy to read and understand.
+        Must consider to accurately distinguish between title, content, paragraphes and so on.
+        Write the new sentences on the new rows.'''
+    return prompt
 
-class PostView(APIView):   ## APIView for social media post
+def funtionPromptArticleSpanish(title, keyword, emotion, language):
+    prompt = f'''Escribe un artículo en español.  El artículo debe ser contenido optimizado para SEO y debe incluir {keyword}. 
+         El artículo debe estar escrito con {emotion}. Normalmente, el artículo debe contener 750 palabras. La última frase del artículo debe ser una frase significativa y completa. La ultima frase debe estar completa y terminar siempre el articulo con un ".".
+        El título del artículo debe ser {title} y no cambies ni agregues nada, ¡y escribe con una fuente más grande que el contenido!
+        Queremos que este contenido sea altamente buscable.
+        Escribe el artículo de manera natural y evita comentarios o palabras (por ejemplo: contenido optimizado para SEO) que no estén relacionados con el tema.
+        No incluyas símbolos innecesarios como ---, ###, **, etc.
+        Añade saltos de línea, guiones e indentaciones para hacer que el artículo sea fácil de leer y entender.
+        Debes considerar distinguir con precisión entre título, contenido, párrafos, etc.
+        Escribe las nuevas oraciones en nuevas filas.'''
+    return prompt
+
+
+class RegisterView(generics.GenericAPIView):            
+    serializer_class = RegisterSerializer
+    def post(self,request):
+        user=request.data
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        otp = generate_otp()
+        serializer.validated_data['otp'] = otp
+        send_otp_email(serializer.validated_data['email'], otp)
+        serializer.save()
+        request.session['otp'] = otp
+        user_data = serializer.data
+        return Response(user_data, status=status.HTTP_201_CREATED)
+
+
+
+
+class PostView(APIView):              ## APIView for social media post
     def get(self, request):
      user = request.user
      user=User.objects.get(pk=user.id)
      
-     if user.email=="miriamlaof@gmail.com":   ## in case of the site's owner
+     if user.email=="miriamlaof@gmail.com":       ## in case of the site's owner
             subject = request.GET.get('subject')
             url = request.GET.get('url')
             emotion= request.GET.get('checkedValues')
             language= request.GET.get('language')
-            socialType = request.GET.get('post')
-            
+            socialType = request.GET.get('post')           
             promptPostUrlEnglish = functionPromptPostUrlEnglish(subject, url, emotion, language, socialType)
             promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
-
             promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
-
             promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
-
             if language=="English":
              if url!="":
               promptEnglish = promptPostUrlEnglish
              elif url=="":
-              promptEnglish = promptPostNonUrlEnglish
-              res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": promptEnglish},
-        ]
-    )
-              generatedPost = res.choices[0].message.content
-
-             
-              if generatedPost[-1]==",": ## This means that the last of the sentence is ",".
-               generatedPost=generatedPost  
-               generatedPost[-1]=="."    
-              
-               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-              elif generatedPost[-1]!=',' and generatedPost[-1]!='.': ## wrong sentence
-               generatedPost=generatedPost  
-               generatedPost=generatedPost+"."
-              
-               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-              elif generatedPost[-1]=='.':    ## correct sentence
-               generatedPost=generatedPost  
-               
-               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+              promptEnglish = promptPostNonUrlEnglish             
+              generatedPost = generatingContent(promptEnglish)           
+              content=contentChecking(generatedPost)
+              return Response({"message": content}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              if url!="":
-
                   promptSpanish = promptPostUrlSpanish
              elif url=="":
-                promptSpanish = promptPostNonUrlSpanish
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": promptSpanish},
-        ]
-    )
-             generatedPost = res.choices[0].message.content
-            
-             if generatedPost[-1]==",":
-              generatedPost=generatedPost  
-              generatedPost[-1]=="."
-              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
-              generatedPost=generatedPost  
-              generatedPost=generatedPost+"."
-              
-              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]=='.':
-               generatedPost=generatedPost  
-               
-               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+                promptSpanish = promptPostNonUrlSpanish             
+             generatedPost = generatingContent(promptSpanish)
+             content=contentChecking(generatedPost)
+             return Response({"message": content}, status=status.HTTP_200_OK)            
+             
 
      elif user.email!="miriamlaof@gmail.com":     ## In case of the person that is not site's owner
         if user.usage_count < 3:     ## Users can use this service 3 times free
@@ -208,47 +202,20 @@ class PostView(APIView):   ## APIView for social media post
              if url!="":
               promptEnglish = promptPostUrlEnglish
              elif url=="":
-                promptEnglish = promptPostNonUrlEnglish
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             generatedPost = res.choices[0].message.content
-             if generatedPost[-1]==",":
-              generatedPost=generatedPost  
-              generatedPost[-1]=="."
-              
-              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
-              generatedPost=generatedPost  
-              generatedPost=generatedPost+"."
-              
-              return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]=='.':
-               generatedPost=generatedPost  
+                prompt = promptPostNonUrlEnglish
+             
+             generatedPost =generatingContent(prompt)
+             content=contentChecking(generatedPost) 
                
-               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
+             return Response({"message": content}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              if url!="":
 
                   prompt =  functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
              elif key2=="":
                 prompt =  functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             content = res.choices[0].message.content
+             
+             content = generatingContent(prompt)
              return Response({"message": content}, status=status.HTTP_200_OK)
         elif user.usage_count >=3 and (user.subscribed==False and user.word_limit==0 ):
              return Response({"message": "free"}, status=status.HTTP_201_CREATED)
@@ -270,28 +237,22 @@ class PostView(APIView):   ## APIView for social media post
               prompt = promptPostUrlEnglish
              elif url=="":
                 prompt = promptPostNonUrlEnglish
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},])   
-             generatedPost = res.choices[0].message.content
+              
+             generatedPost = generatingContent(prompt)
              if generatedPost[-1]==",":
-               generatedPost=generatedPost  
+                 
                generatedPost[-1]=="."
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
-               generatedPost=generatedPost  
+                
                generatedPost=generatedPost+"."
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]=='.':
-               generatedPost=generatedPost  
+               
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
@@ -301,30 +262,22 @@ class PostView(APIView):   ## APIView for social media post
                   prompt = promptPostUrlSpanish
              elif url=="":
                 prompt = promptPostNonUrlSpanish
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             generatedPost = res.choices[0].message.content
+             
+             generatedPost = generatingContent(prompt)
              if generatedPost[-1]==",":
-              generatedPost=generatedPost  
+                
               generatedPost[-1]=="."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
-              generatedPost=generatedPost  
+                
               generatedPost=generatedPost+"."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]=='.':
-               generatedPost=generatedPost  
+                 
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
@@ -348,30 +301,22 @@ class PostView(APIView):   ## APIView for social media post
               prompt = promptPostUrlEnglish
              elif url=="":
                 prompt = promptPostNonUrlEnglish
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             generatedPost = res.choices[0].message.content
+             
+             generatedPost = generatingContent(prompt)
              if generatedPost[-1]==",":
-              generatedPost=generatedPost  
+                
               generatedPost[-1]=="."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
-              generatedPost=generatedPost  
+               
               generatedPost=generatedPost+"."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]=='.':
-               generatedPost=generatedPost  
+               
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
@@ -381,31 +326,23 @@ class PostView(APIView):   ## APIView for social media post
                   prompt = promptPostUrlSpanish
              elif url=="":
                 prompt = promptPostNonUrlSpanish
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             generatedPost = res.choices[0].message.content
+             
+             generatedPost = generatingContent(prompt)
        
              if generatedPost[-1]==",":
-              generatedPost=generatedPost  
+            
               generatedPost[-1]=="."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
-              generatedPost=generatedPost  
+           
               generatedPost=generatedPost+"."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
              elif generatedPost[-1]=='.':
-               generatedPost=generatedPost  
+            
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
@@ -429,16 +366,8 @@ class PostView(APIView):   ## APIView for social media post
               prompt = promptPostUrlEnglish
              elif url=="":
                 prompt = promptPostNonUrlEnglish
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             content = res.choices[0].message.content
+             
+             content = generatingContent(prompt)
              user.word_number=user.word_number+len(content.split())
              user.save()
              return Response({"message": content}, status=status.HTTP_201_CREATED)
@@ -448,16 +377,8 @@ class PostView(APIView):   ## APIView for social media post
                   prompt = promptPostUrlSpanish
              elif url=="":
                 prompt = promptPostNonUrlSpanish
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             content = res.choices[0].message.content
+             
+             content = generatingContent(prompt)
              user.word_number=user.word_number+len(content.split())
              user.save()
              return Response({"message": content}, status=status.HTTP_200_OK)
@@ -647,29 +568,7 @@ def translator(content):
     )
     content = res.choices[0].message.content
     return content
-def funtionPromptArticleEnglish(title, keyword, emotion, language):
-    prompt = f'''Write article in English. The article must be SEO-Optmized Content and the article must be included {keyword}
-        The article must be written with {emotion}.The article should typically contain 750 words. The last sentence of article must be a meaningfull and complete sentence. The last sentence must be ended a full stop.
-        The title of article must be {title} and don't change or add anything and write with bigger font than content!
-        We want this content to be high searchable.
-        Write the article naturally and avoid comments or words(for example: SEO-Optimized Content) that are not related to the topic.
-        Don't involve unnecessary symbols such as ---, ###, **, and so on.
-        Add line breaks, dashes and indentations to make the article easy to read and understand.
-        Must consider to accurately distinguish between title, content, paragraphes and so on.
-        Write the new sentences on the new rows.'''
-    return prompt
 
-def funtionPromptArticleSpanish(title, keyword, emotion, language):
-    prompt = f'''Escribe un artículo en español.  El artículo debe ser contenido optimizado para SEO y debe incluir {keyword}. 
-         El artículo debe estar escrito con {emotion}. Normalmente, el artículo debe contener 750 palabras. La última frase del artículo debe ser una frase significativa y completa. La ultima frase debe estar completa y terminar siempre el articulo con un ".".
-        El título del artículo debe ser {title} y no cambies ni agregues nada, ¡y escribe con una fuente más grande que el contenido!
-        Queremos que este contenido sea altamente buscable.
-        Escribe el artículo de manera natural y evita comentarios o palabras (por ejemplo: contenido optimizado para SEO) que no estén relacionados con el tema.
-        No incluyas símbolos innecesarios como ---, ###, **, etc.
-        Añade saltos de línea, guiones e indentaciones para hacer que el artículo sea fácil de leer y entender.
-        Debes considerar distinguir con precisión entre título, contenido, párrafos, etc.
-        Escribe las nuevas oraciones en nuevas filas.'''
-    return prompt
 
 
 class FreeServiceUsageView(APIView):
@@ -686,60 +585,16 @@ class FreeServiceUsageView(APIView):
             language=request.GET.get('language')
             if language=="English":
              prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             generatedArticle = res.choices[0].message.content
-            
              
-               
-            
-             if generatedArticle[-1]==",":
-              generatedArticle=generatedArticle  
-              generatedArticle[-1]=="."
-              
-              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':
-              generatedArticle=generatedArticle  
-              generatedArticle=generatedArticle+"."
-              
-              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]=='.':
-               generatedArticle=generatedArticle  
-               
-               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
+             generatedArticle = generatingContent(prompt)
+             generatedArticle=contentChecking(generatedArticle)  
+             return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              prompt = funtionPromptArticleSpanish(title, keyword, emotion, language)
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             generatedArticle = res.choices[0].message.content
-             if generatedArticle[-1]==",":
-              generatedArticle=generatedArticle  
-              generatedArticle[-1]=="."
-              
-              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':
-              generatedArticle=generatedArticle  
-              generatedArticle=generatedArticle+"."
-              
-              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif content[-1]=='.':
-               generatedArticle=generatedArticle  
-               
-               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
+             
+             generatedArticle = generatingContent(prompt)
+             generatedArticle= contentChecking(generatedArticle)
+             return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
 
      elif user.email!="miriamlaof@gmail.com":
         if user.usage_count < 3:
@@ -752,43 +607,15 @@ class FreeServiceUsageView(APIView):
             language=request.GET.get('language')
 
             if language=="English":
-             prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             generatedArticle = res.choices[0].message.content
-             if generatedArticle[-1]==",":
-              generatedArticle=generatedArticle  
-              generatedArticle[-1]=="."
-              
-              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':
-              generatedArticle=generatedArticle  
-              generatedArticle=generatedArticle+"."
-              
-              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]=='.':
-               generatedArticle=generatedArticle  
+             prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)          
+             generatedArticle = generatingContent(prompt)
+             generatedArticle=contentChecking(generatedArticle)
                
-               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
+             return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              prompt = funtionPromptArticleSpanish(title, keyword, emotion, language)
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             generatedArticle = res.choices[0].message.content
+             
+             generatedArticle = generatingContent(prompt)
              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
         elif user.usage_count >=3 and (user.subscribed==False and user.word_limit==0 ):
              return Response({"message": "free"}, status=status.HTTP_201_CREATED)
@@ -802,60 +629,44 @@ class FreeServiceUsageView(APIView):
             if language=="English":
 
              prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )        
-             generatedArticle = res.choices[0].message.content
+                     
+             generatedArticle = generatingContent(prompt)
              if generatedArticle[-1]==",":
             
               generatedArticle[-1]=="."
-              user.word_number=user.word_number+len(content.split())
+              user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
              elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':
           
               generatedArticle=generatedArticle+"."
-              user.word_number=user.word_number+len(content.split())
+              user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
              elif generatedArticle[-1]=='.':
             
-               user.word_number=user.word_number+len(content.split())
+               user.word_number=user.word_number+len(generatedArticle.split())
                user.save()
                return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              prompt =funtionPromptArticleSpanish(title, keyword, emotion, language)
-             res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-             generatedArticle = res.choices[0].message.content
+             
+             generatedArticle = generatingContent(prompt)
              if generatedArticle[-1]==",":
          
               generatedArticle[-1]=="."
-              user.word_number=user.word_number+len(content.split())
+              user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
              elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':
             
               generatedArticle=generatedArticle+"."
-              user.word_number=user.word_number+len(content.split())
+              user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
              elif generatedArticle[-1]=='.':
   
-               user.word_number=user.word_number+len(content.split())
+               user.word_number=user.word_number+len(generatedArticle.split())
                user.save()
                return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
         elif (user.usage_count==3 and user.word_number==0 )and (user.subscribed==False and user.word_number<user.word_limit):
@@ -874,18 +685,18 @@ class FreeServiceUsageView(APIView):
              if generatedArticle[-1]==",":
                
               generatedArticle[-1]=="."
-              user.word_number=user.word_number+len(content.split())
+              user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
              elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':
          
               generatedArticle=generatedArticle+"."
-              user.word_number=user.word_number+len(content.split())
+              user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
              elif generatedArticle[-1]=='.':
               
-               user.word_number=user.word_number+len(content.split())
+               user.word_number=user.word_number+len(generatedArticle.split())
                user.save()
                return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
             elif language=="Spanish":
@@ -939,21 +750,10 @@ class FreeServiceUsageView(APIView):
     
             return Response({"message": "limit"}, status=status.HTTP_201_CREATED)
             
-def generatingContent(prompt):
-    res=client.chat.completions.create(
-         model = "gpt-4-1106-preview",
-         max_tokens = 1048,
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-    content = res.choices[0].message.content
-    return content
 
 
-class Producta(APIView):
+
+class ProductA(APIView):
     def get(self, request):
         user = request.user
         domain_url = 'https://emotionseo.ai/generatearticle'
@@ -984,7 +784,7 @@ class Producta(APIView):
         return Response({"message": "Subscription successful. You can continue using the service"}, status=status.HTTP_200_OK)
 
 
-class Productb(APIView):
+class ProductB(APIView):
     
     def get(self, request):
         user = request.user
@@ -1014,22 +814,7 @@ class Productb(APIView):
         
         return Response({"message": "Subscription successful. You can continue using the service"}, status=status.HTTP_200_OK)
 
-class GetInfo(APIView):
-    #permission_classes = [IsAuthenticated]
-    def get(self, request):
-        user=request.user
-        user = User.objects.get(id=user.id)
-        word_limit=user.word_limit
-        generated_word=user.word_number
-        rest_word=word_limit-generated_word
-
-        first_name = user.first_name
-        last_name=user.last_name
-        subscribed=user.subscribed
-        
-        return Response({ "last":last_name,"word_limit":word_limit,"generated_word":generated_word, "rest_word":rest_word, "first":first_name,"subscribed":subscribed}, status=status.HTTP_200_OK)
-
-class Productc(APIView):
+class ProductC(APIView):
     
     def get(self, request):
         user=request.user
@@ -1059,8 +844,23 @@ class Productc(APIView):
         
         return Response({"message": "Subscription successful. You can continue using the service"}, status=status.HTTP_200_OK)
 
+class GetInfo(APIView):
+    #permission_classes = [IsAuthenticated]
+    def get(self, request):
+        user=request.user
+        user = User.objects.get(id=user.id)
+        word_limit=user.word_limit
+        generated_word=user.word_number
+        rest_word=word_limit-generated_word
 
-class FreeServiceUsageView2(APIView):
+        first_name = user.first_name
+        last_name=user.last_name
+        subscribed=user.subscribed
+        
+        return Response({ "last":last_name,"word_limit":word_limit,"generated_word":generated_word, "rest_word":rest_word, "first":first_name,"subscribed":subscribed}, status=status.HTTP_200_OK)
+
+
+class Invoice(APIView):
     #permission_classes = [IsAuthenticated]
     def get(self, request):
         user = request.user
@@ -1100,19 +900,7 @@ class FreeServiceUsageView2(APIView):
         email.attach('invoice.pdf', pdf_data, 'application/pdf')
         email.send()
         os.remove(pdf_file_path)
-
         pdf_file.close()
-        
-
-      
-
-        # Create or update the invoice
-
-        
-
-        # Create or update the subscription
-        
-
         return Response({"message": "Subscription successful. You can continue using the service"}, status=status.HTTP_200_OK)
 
 
@@ -1123,19 +911,15 @@ class FreeServiceUsageView2(APIView):
 class ValidateOTP(APIView):
     permission_classes=[AllowAny]
     def get(self, request):
-        otp = request.GET.get('otp')
-       
-        
-      
+        otp = request.GET.get('otp')      
         try:
-            user=User.objects.get(otp=otp)
-            
+            user=User.objects.get(otp=otp)          
         except User.DoesNotExist:
             return Response({'error':'User with this email does not exist'}, status=status.HTTP_201_CREATED)
         if user.otp==otp:
             user.otp=None
             user.save()
-            return Response({'token':'okya'}, status=status.HTTP_200_OK)
+            return Response({'token':'okay'}, status=status.HTTP_200_OK)
         else:
             return Response({'error':'Invalid OTP'}, status=status.HTTP_201_CREATED)
         
@@ -1161,53 +945,28 @@ class LogoutAPIView(generics.GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"a":"success"},status=status.HTTP_204_NO_CONTENT)
+        return Response({"message":"success"},status=status.HTTP_204_NO_CONTENT)
 
 
 
 
-def generating(request):
+def generatingSEOKeywords(request):            ## Generating 10 SEO keywords
     data=request.GET.get("title")
-    language=request.GET.get("language")
-    
-    if language=='English':
-    
-     client = OpenAI(
-    api_key = api_key)
+    language=request.GET.get("language")   
+    if language=='English':   
+     client = OpenAI(api_key = api_key)
      prompt = f"write 10 SEO keywords related to \"{data}\" without integer and breaking line. Ten keywords should be separated by commas."
-     res=client.chat.completions.create(
-        model = "gpt-4-1106-preview",
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-    
-     content = res.choices[0].message.content
-
+     content = generatingContent(prompt)
      return JsonResponse({'keyword':content})
-    elif language=="Spanish":
-     client = OpenAI(
-    api_key =api_key)
-     prompt = f"escriba 10 palabras clave SEO relacionadas con \"{data}\" sin números enteros ni líneas de separación. Diez palabras clave deben estar separadas por comas."
-     res=client.chat.completions.create(
-        model = "gpt-4-1106-preview",
-        messages = [
-            {"role": "system", "content": 'You write text based on my prompt.'
-            },
-            {"role": "user", "content": prompt},
-        ]
-    )
-    
-     content = res.choices[0].message.content
-   
+    elif language=="Spanish":    
+     prompt = f"escriba 10 palabras clave SEO relacionadas con \"{data}\" sin números enteros ni líneas de separación. Diez palabras clave deben estar separadas por comas."    
+     content = generatingContent(prompt)  
      return JsonResponse({'keyword':content})
 
 
 User = get_user_model()
 @csrf_exempt
-def forgot(request):
+def resetPassword(request):
     if request.method == 'POST':
         email_info = json.loads(request.body)
         email = email_info.get('email')
@@ -1227,7 +986,7 @@ def forgot(request):
     return JsonResponse({'error': 'Invalid request'})
 
 @csrf_exempt
-def forgotnew(request):
+def forgotNew(request):
     if request.method == 'POST':
         email_info = json.loads(request.body)
         email = email_info.get('email')
