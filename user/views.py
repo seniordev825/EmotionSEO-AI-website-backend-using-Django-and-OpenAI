@@ -50,7 +50,7 @@ load_dotenv()
 api_key = os.getenv('OPENAI_KEY')
 client = OpenAI(api_key = api_key)
 
-def generatingContent(prompt):
+def generatingContentByOpenai(prompt):
     res=client.chat.completions.create(
          model = "gpt-4-1106-preview",
          max_tokens = 1048,
@@ -65,9 +65,8 @@ def generatingContent(prompt):
 
 def contentChecking(content):
     if content[-1]==",":                          ## This means that the last of the sentence is ",".         
-      content[-1]=="."                  
-               
-    elif content[-1]!=',' and content[-1]!='.':    ## wrong sentence               
+      content[-1]=="."                                 
+    elif content[-1]!=',' and content[-1]!='.':     ## wrong sentence               
       content=content+"."                           
     elif content[-1]=='.':                         ## correct sentence  
       content=content             
@@ -149,14 +148,11 @@ class RegisterView(generics.GenericAPIView):
         return Response(user_data, status=status.HTTP_201_CREATED)
 
 
-
-
-class PostView(APIView):              ## APIView for social media post
+class PostView(APIView):                            ## APIView for social media post
     def get(self, request):
      user = request.user
-     user=User.objects.get(pk=user.id)
-     
-     if user.email=="miriamlaof@gmail.com":       ## in case of the site's owner
+     user=User.objects.get(pk=user.id)      
+     if user.email=="miriamlaof@gmail.com":          ## in case of the site's owner
             subject = request.GET.get('subject')
             url = request.GET.get('url')
             emotion= request.GET.get('checkedValues')
@@ -168,25 +164,24 @@ class PostView(APIView):              ## APIView for social media post
             promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
             if language=="English":
              if url!="":
-              promptEnglish = promptPostUrlEnglish
+              prompt = promptPostUrlEnglish
              elif url=="":
-              promptEnglish = promptPostNonUrlEnglish             
-              generatedPost = generatingContent(promptEnglish)           
+              prompt = promptPostNonUrlEnglish             
+              generatedPost = generatingContentByOpenai(prompt)           
               content=contentChecking(generatedPost)
               return Response({"message": content}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              if url!="":
-                  promptSpanish = promptPostUrlSpanish
+                  prompt = promptPostUrlSpanish
              elif url=="":
-                promptSpanish = promptPostNonUrlSpanish             
-             generatedPost = generatingContent(promptSpanish)
+                prompt= promptPostNonUrlSpanish             
+             generatedPost = generatingContentByOpenai(prompt)
              content=contentChecking(generatedPost)
              return Response({"message": content}, status=status.HTTP_200_OK)            
              
 
      elif user.email!="miriamlaof@gmail.com":     ## In case of the person that is not site's owner
-        if user.usage_count < 3:     ## Users can use this service 3 times free
-       
+        if user.usage_count < 3:                  ## Users can use this service 3 times free     
             user.usage_count += 1
             user.save()
             subject = request.GET.get('subject')
@@ -200,26 +195,21 @@ class PostView(APIView):              ## APIView for social media post
             promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
             if language=="English":
              if url!="":
-              promptEnglish = promptPostUrlEnglish
+                prompt= promptPostUrlEnglish
              elif url=="":
-                prompt = promptPostNonUrlEnglish
-             
-             generatedPost =generatingContent(prompt)
-             content=contentChecking(generatedPost) 
-               
+                prompt = promptPostNonUrlEnglish            
+             generatedPost =generatingContentByOpenai(prompt)
+             content=contentChecking(generatedPost)                
              return Response({"message": content}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              if url!="":
-
-                  prompt =  functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
+                prompt =  functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
              elif key2=="":
-                prompt =  functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
-             
-             content = generatingContent(prompt)
+                prompt =  functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)             
+             content = generatingContentByOpenai(prompt)
              return Response({"message": content}, status=status.HTTP_200_OK)
         elif user.usage_count >=3 and (user.subscribed==False and user.word_limit==0 ):
              return Response({"message": "free"}, status=status.HTTP_201_CREATED)
-
         elif user.usage_count >=3 and (user.subscribed==True and user.word_number<user.word_limit):
             subject = request.GET.get('subject')
             url = request.GET.get('url')
@@ -230,60 +220,48 @@ class PostView(APIView):              ## APIView for social media post
             promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
             promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
             promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
-
             if language=="English":
-
              if url!="":
-              prompt = promptPostUrlEnglish
+                prompt = promptPostUrlEnglish
              elif url=="":
-                prompt = promptPostNonUrlEnglish
-              
-             generatedPost = generatingContent(prompt)
-             if generatedPost[-1]==",":
-                 
+                prompt = promptPostNonUrlEnglish              
+             generatedPost = generatingContentByOpenai(prompt)
+             if generatedPost[-1]==",":                 
                generatedPost[-1]=="."
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
-                
+             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':                
                generatedPost=generatedPost+"."
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]=='.':
-               
+             elif generatedPost[-1]=='.':               
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              if url!="":
-
-                  prompt = promptPostUrlSpanish
+                prompt = promptPostUrlSpanish
              elif url=="":
-                prompt = promptPostNonUrlSpanish
-             
-             generatedPost = generatingContent(prompt)
-             if generatedPost[-1]==",":
-                
+                prompt = promptPostNonUrlSpanish             
+             generatedPost = generatingContentByOpenai(prompt)
+             if generatedPost[-1]==",":                
               generatedPost[-1]=="."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
-                
+             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':                
               generatedPost=generatedPost+"."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]=='.':
-                 
+             elif generatedPost[-1]=='.':                 
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
         elif (user.usage_count==3 and user.word_number==0 )and (user.subscribed==False and user.word_number<user.word_limit):
             return Response({"message": "free"}, status=status.HTTP_201_CREATED)
-
         elif (user.usage_count==3 and user.word_number!=0 )and (user.subscribed==False and user.word_number<user.word_limit):
             subject = request.GET.get('subject')
             url= request.GET.get('url')
@@ -294,61 +272,46 @@ class PostView(APIView):              ## APIView for social media post
             promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
             promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
             promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
-
             if language=="English":
-
              if url!="":
-              prompt = promptPostUrlEnglish
+                prompt = promptPostUrlEnglish
              elif url=="":
-                prompt = promptPostNonUrlEnglish
-             
-             generatedPost = generatingContent(prompt)
-             if generatedPost[-1]==",":
-                
+                prompt = promptPostNonUrlEnglish             
+             generatedPost = generatingContentByOpenai(prompt)
+             if generatedPost[-1]==",":               
               generatedPost[-1]=="."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
-               
+             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':               
               generatedPost=generatedPost+"."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]=='.':
-               
+             elif generatedPost[-1]=='.':               
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
             elif language=="Spanish":
              if url!="":
-
-                  prompt = promptPostUrlSpanish
+                prompt = promptPostUrlSpanish
              elif url=="":
-                prompt = promptPostNonUrlSpanish
-             
-             generatedPost = generatingContent(prompt)
-       
-             if generatedPost[-1]==",":
-            
+                prompt = promptPostNonUrlSpanish             
+             generatedPost = generatingContentByOpenai(prompt)       
+             if generatedPost[-1]==",":            
               generatedPost[-1]=="."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':
-           
+             elif generatedPost[-1]!=',' and generatedPost[-1]!='.':          
               generatedPost=generatedPost+"."
               user.word_number=user.word_number+len(generatedPost.split())
               user.save()
               return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-             elif generatedPost[-1]=='.':
-            
+             elif generatedPost[-1]=='.':            
                user.word_number=user.word_number+len(generatedPost.split())
                user.save()
                return Response({"message": generatedPost}, status=status.HTTP_200_OK)
-                
-
-               
             
         elif user.usage_count >3 and (user.subscribed==False and user.word_number<user.word_limit):
             subject = request.GET.get('subject')
@@ -360,25 +323,21 @@ class PostView(APIView):              ## APIView for social media post
             promptPostNonUrlEnglish = functionPromptPostNonUrlEnglish(subject, url, emotion, language, socialType)
             promptPostUrlSpanish = functionPromptPostUrlSpanish(subject, url, emotion, language, socialType)
             promptPostNonUrlSpanish = functionPromptPostNonUrlSpanish(subject, url, emotion, language, socialType)
-            if key4=="English":
-
+            if language=="English":
              if url!="":
-              prompt = promptPostUrlEnglish
+                prompt = promptPostUrlEnglish
              elif url=="":
-                prompt = promptPostNonUrlEnglish
-             
-             content = generatingContent(prompt)
+                prompt = promptPostNonUrlEnglish             
+             content = generatingContentByOpenai(prompt)
              user.word_number=user.word_number+len(content.split())
              user.save()
              return Response({"message": content}, status=status.HTTP_201_CREATED)
             elif language=="Spanish":
              if url!="":
-
-                  prompt = promptPostUrlSpanish
+                prompt = promptPostUrlSpanish
              elif url=="":
-                prompt = promptPostNonUrlSpanish
-             
-             content = generatingContent(prompt)
+                prompt = promptPostNonUrlSpanish             
+             content = generatingContentByOpenai(prompt)
              user.word_number=user.word_number+len(content.split())
              user.save()
              return Response({"message": content}, status=status.HTTP_200_OK)
@@ -386,8 +345,7 @@ class PostView(APIView):              ## APIView for social media post
         elif user.word_number>=user.word_limit:            
             user.subscribed=False
             user.word_number=0
-            user.save()
-    
+            user.save()    
             return Response({"message": "limit"}, status=status.HTTP_201_CREATED)    
 
 
@@ -403,10 +361,7 @@ def generateImageCasePost(request):
     if request.method == 'POST':
         email_info = json.loads(request.body)
         content = email_info.get('content')
-        content=translator(content)          
-        
-    
-       
+        content=translator(content)                 
         url = "https://api.stability.ai/v1/generation/stable-diffusion-v1-6/text-to-image"
         headers ={
                 "Accept": "application/json",
@@ -461,12 +416,8 @@ def generateImageCaseArticle(request):
         start_index = string_data.find("b64_json=") + len("b64_json=")
         end_index = string_data.find(",", start_index)
         b64_json = string_data[start_index:end_index]
-
-
         with open(f"D:/JCS-image/spain backend/emotion/a.png", "wb") as f:  ## Generating Image usng OpenAI
-                        f.write(base64.b64decode(b64_json))
-    
-       
+                        f.write(base64.b64decode(b64_json))       
         url = "https://api.stability.ai/v1/generation/stable-diffusion-v1-6/text-to-image"
         headers ={
                 "Accept": "application/json",
@@ -492,11 +443,9 @@ def generateImageCaseArticle(request):
             ],
 
             }
-
         response = requests.post(url, json=data, headers=headers)
         sleep(5)
         data = response.json()
-
         for i, image in enumerate(data["artifacts"]):
                     with open(f"D:/JCS-image/spain backend/emotion/v1_txt2img_{i}.png", "wb") as f:  ## Generating Image usng Stability
                         f.write(base64.b64decode(image["base64"]))
@@ -551,160 +500,125 @@ def translator(content):
 
 
 
-class FreeServiceUsageView(APIView):
-    #permission_classes = [IsAuthenticated]
-
+class ArticleView(APIView):                   ## Article
     def get(self, request):
      user = request.user
      user=User.objects.get(pk=user.id)
-     
      if user.email=="miriamlaof@gmail.com":
             title = request.GET.get('title')
             keyword = request.GET.get('keyword')
             emotion=request.GET.get('checkedValues')
             language=request.GET.get('language')
             if language=="English":
-             prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)
-             
-             generatedArticle = generatingContent(prompt)
+             prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)         
+             generatedArticle = generatingContentByOpenai(prompt)
              generatedArticle=contentChecking(generatedArticle)  
              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
             elif language=="Spanish":
-             prompt = funtionPromptArticleSpanish(title, keyword, emotion, language)
-             
-             generatedArticle = generatingContent(prompt)
+             prompt = funtionPromptArticleSpanish(title, keyword, emotion, language)             
+             generatedArticle = generatingContentByOpenai(prompt)
              generatedArticle= contentChecking(generatedArticle)
              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
 
      elif user.email!="miriamlaof@gmail.com":
         if user.usage_count < 3:
-            # Allow access to the service
             user.usage_count += 1
             user.save()
             title= request.GET.get('title')
             keyword = request.GET.get('keyword')
             emotion=request.GET.get('checkedValues')
             language=request.GET.get('language')
-
             if language=="English":
              prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)          
-             generatedArticle = generatingContent(prompt)
-             generatedArticle=contentChecking(generatedArticle)
-               
+             generatedArticle = generatingContentByOpenai(prompt)
+             generatedArticle=contentChecking(generatedArticle)               
              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
             elif language=="Spanish":
-             prompt = funtionPromptArticleSpanish(title, keyword, emotion, language)
-             
-             generatedArticle = generatingContent(prompt)
+             prompt = funtionPromptArticleSpanish(title, keyword, emotion, language)             
+             generatedArticle = generatingContentByOpenai(prompt)
              return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
         elif user.usage_count >=3 and (user.subscribed==False and user.word_limit==0 ):
              return Response({"message": "free"}, status=status.HTTP_201_CREATED)
-
         elif user.usage_count >=3 and (user.subscribed==True and user.word_number<user.word_limit):
             title= request.GET.get('title')
             keyword = request.GET.get('keyword')
             emotion =request.GET.get('checkedValues')
             language =request.GET.get('language')
-
             if language=="English":
-
-             prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)
-                     
-             generatedArticle = generatingContent(prompt)
-             if generatedArticle[-1]==",":
-            
+             prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)                     
+             generatedArticle = generatingContentByOpenai(prompt)
+             if generatedArticle[-1]==",":            
               generatedArticle[-1]=="."
               user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':
-          
+             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':          
               generatedArticle=generatedArticle+"."
               user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]=='.':
-            
+             elif generatedArticle[-1]=='.':            
                user.word_number=user.word_number+len(generatedArticle.split())
                user.save()
                return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
             elif language=="Spanish":
-             prompt =funtionPromptArticleSpanish(title, keyword, emotion, language)
-             
-             generatedArticle = generatingContent(prompt)
-             if generatedArticle[-1]==",":
-         
+             prompt =funtionPromptArticleSpanish(title, keyword, emotion, language)             
+             generatedArticle = generatingContentByOpenai(prompt)
+             if generatedArticle[-1]==",":         
               generatedArticle[-1]=="."
               user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':
-            
+             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':            
               generatedArticle=generatedArticle+"."
               user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]=='.':
-  
+             elif generatedArticle[-1]=='.':  
                user.word_number=user.word_number+len(generatedArticle.split())
                user.save()
                return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
         elif (user.usage_count==3 and user.word_number==0 )and (user.subscribed==False and user.word_number<user.word_limit):
             return Response({"message": "free"}, status=status.HTTP_201_CREATED)
-
         elif (user.usage_count==3 and user.word_number!=0 )and (user.subscribed==False and user.word_number<user.word_limit):
             title = request.GET.get('title')
             keyword= request.GET.get('keyword')
             emotion=request.GET.get('checkedValues')
             language=request.GET.get('language')
-
             if language=="English":
-
              prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)
-             generatedArticle = generatingContent(prompt)
-             if generatedArticle[-1]==",":
-               
+             generatedArticle = generatingContentByOpenai(prompt)
+             if generatedArticle[-1]==",":              
               generatedArticle[-1]=="."
               user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':
-         
+             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':         
               generatedArticle=generatedArticle+"."
               user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]=='.':
-              
+             elif generatedArticle[-1]=='.':             
                user.word_number=user.word_number+len(generatedArticle.split())
                user.save()
                return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
             elif language=="Spanish":
-             prompt = funtionPromptArticleSpanish(title, keyword, emotion, language)
-             
-             generatedArticle = generatingContent(prompt)
-       
-             if generatedArticle[-1]==",":
-           
+             prompt = funtionPromptArticleSpanish(title, keyword, emotion, language)             
+             generatedArticle = generatingContentByOpenai(prompt)      
+             if generatedArticle[-1]==",":          
               generatedArticle[-1]=="."
               user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':
-               
+             elif generatedArticle[-1]!=',' and generatedArticle[-1]!='.':              
               generatedArticle=generatedArticle+"."
               user.word_number=user.word_number+len(generatedArticle.split())
               user.save()
               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-             elif generatedArticle[-1]=='.':
-            
+             elif generatedArticle[-1]=='.':           
                user.word_number=user.word_number+len(generatedArticle.split())
                user.save()
-               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)
-                
-
-               
-            
+               return Response({"message": generatedArticle}, status=status.HTTP_200_OK)          
         elif user.usage_count >3 and (user.subscribed==False and user.word_number<user.word_limit):
             title = request.GET.get('title')
             keyword = request.GET.get('keyword')
@@ -712,27 +626,22 @@ class FreeServiceUsageView(APIView):
             language=request.GET.get('language')
             if language=="English":
              prompt = funtionPromptArticleEnglish(title, keyword, emotion, language)             
-             content=generatingContent(prompt)
+             content=generatingContentByOpenai(prompt)
              user.word_number=user.word_number+len(content.split())
              user.save()
              return Response({"message": content}, status=status.HTTP_201_CREATED)
             elif language=="Spanish":
              prompt = prompt = funtionPromptArticleSpanish(title, keyword, emotion, language)
-             content = generatingContent(prompt)
+             content = generatingContentByOpenai(prompt)
              user.word_number=user.word_number+len(content.split())
              user.save()
-             return Response({"message": content}, status=status.HTTP_200_OK)
-        
+             return Response({"message": content}, status=status.HTTP_200_OK)       
         elif user.word_number>=user.word_limit:            
             user.subscribed=False
             user.word_number=0
-            user.save()
-    
+            user.save()    
             return Response({"message": "limit"}, status=status.HTTP_201_CREATED)
             
-
-
-
 class ProductA(APIView):
     def get(self, request):
         user = request.user
@@ -753,19 +662,16 @@ class ProductA(APIView):
                     }
                 ]
             )
-            user = User.objects.get(id=user.id)
-            
+            user = User.objects.get(id=user.id)           
             user.word_limit = 20000
             user.save()
             return JsonResponse({'sessionId': checkout_session['id']})
         except Exception as e:
-            return JsonResponse({'error': str(e)})
-        
+            return JsonResponse({'error': str(e)})       
         return Response({"message": "Subscription successful. You can continue using the service"}, status=status.HTTP_200_OK)
 
 
-class ProductB(APIView):
-    
+class ProductB(APIView):    
     def get(self, request):
         user = request.user
         domain_url = 'https://emotionseo.ai/generatearticle'
@@ -794,8 +700,7 @@ class ProductB(APIView):
         
         return Response({"message": "Subscription successful. You can continue using the service"}, status=status.HTTP_200_OK)
 
-class ProductC(APIView):
-    
+class ProductC(APIView):    
     def get(self, request):
         user=request.user
         domain_url = 'https://emotionseo.ai/generatearticle'
@@ -820,35 +725,27 @@ class ProductC(APIView):
             user.save()
             return JsonResponse({'sessionId': checkout_session['id']})
         except Exception as e:
-            return JsonResponse({'error': str(e)})
-        
+            return JsonResponse({'error': str(e)})        
         return Response({"message": "Subscription successful. You can continue using the service"}, status=status.HTTP_200_OK)
 
 class GetInfo(APIView):
-    #permission_classes = [IsAuthenticated]
     def get(self, request):
         user=request.user
         user = User.objects.get(id=user.id)
         word_limit=user.word_limit
         generated_word=user.word_number
         rest_word=word_limit-generated_word
-
         first_name = user.first_name
         last_name=user.last_name
-        subscribed=user.subscribed
-        
+        subscribed=user.subscribed        
         return Response({ "last":last_name,"word_limit":word_limit,"generated_word":generated_word, "rest_word":rest_word, "first":first_name,"subscribed":subscribed}, status=status.HTTP_200_OK)
 
-
 class Invoice(APIView):
-    #permission_classes = [IsAuthenticated]
     def get(self, request):
         user = request.user
-        user=User.objects.get(id=user.id)
-        
+        user=User.objects.get(id=user.id)       
         city = request.GET.get('city')
-        postalcode = request.GET.get('postalcode')
-        
+        postalcode = request.GET.get('postalcode')       
         home = request.GET.get('home')
         dni = request.GET.get('dni')
         company_name=request.GET.get('cname')
@@ -862,15 +759,11 @@ class Invoice(APIView):
         context = {'first_name': user.first_name, 'last_name':user.last_name, 'companyname':user.companyname, 'city':user.city, 'postalcode':user.postalcode,
         'home':user.home, 'dni':user.dni, 'currenttime':user.current_time, 'email':user.email}
         html = template.render(context)
-
         pdf_file_path = 'invoice.pdf'
         with open(pdf_file_path, 'w+b') as pdf_file:
             pisa_status = pisa.CreatePDF(html, dest=pdf_file)
-
-        # Read the PDF file
         with open(pdf_file_path, 'rb') as pdf_file:
             pdf_data = pdf_file.read()
-
         email = EmailMessage(
             'Invoice',
             'Please find attached the invoice',
@@ -882,11 +775,6 @@ class Invoice(APIView):
         os.remove(pdf_file_path)
         pdf_file.close()
         return Response({"message": "Subscription successful. You can continue using the service"}, status=status.HTTP_200_OK)
-
-
-
-
-
 
 class ValidateOTP(APIView):
     permission_classes=[AllowAny]
@@ -904,8 +792,7 @@ class ValidateOTP(APIView):
             return Response({'error':'Invalid OTP'}, status=status.HTTP_201_CREATED)
         
 class DeleteAccount(APIView):
-    def post(self, request):
-            
+    def post(self, request):           
         username=request.data.get('usernameinfo')
         user=User.objects.get(username=username)
         user.delete()        
@@ -927,30 +814,25 @@ class LogoutAPIView(generics.GenericAPIView):
         serializer.save()
         return Response({"message":"success"},status=status.HTTP_204_NO_CONTENT)
 
-
-
-
-def generatingSEOKeywords(request):            ## Generating 10 SEO keywords
+def generatingSEOKeywords(request):               ## Generating 10 SEO keywords
     data=request.GET.get("title")
     language=request.GET.get("language")   
     if language=='English':   
      client = OpenAI(api_key = api_key)
      prompt = f"write 10 SEO keywords related to \"{data}\" without integer and breaking line. Ten keywords should be separated by commas."
-     content = generatingContent(prompt)
+     content = generatingContentByOpenai(prompt)
      return JsonResponse({'keyword':content})
     elif language=="Spanish":    
      prompt = f"escriba 10 palabras clave SEO relacionadas con \"{data}\" sin números enteros ni líneas de separación. Diez palabras clave deben estar separadas por comas."    
-     content = generatingContent(prompt)  
+     content = generatingContentByOpenai(prompt)  
      return JsonResponse({'keyword':content})
-
 
 User = get_user_model()
 @csrf_exempt
 def resetPassword(request):
     if request.method == 'POST':
         email_info = json.loads(request.body)
-        email = email_info.get('email')
-      
+        email = email_info.get('email')      
         user = User.objects.get(email=email)
         if user:
             uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -969,20 +851,15 @@ def resetPassword(request):
 def forgotNew(request):
     if request.method == 'POST':
         email_info = json.loads(request.body)
-        email = email_info.get('email')
-      
+        email = email_info.get('email')     
         user = User.objects.get(email=email)
-        if user:
-            
+        if user:          
          return JsonResponse({'message': 'Password reset link has been sent to your email'}, status=status.HTTP_200_OK)
         else:
             return JsonResponse({"message":"error"}, status=status.HTTP_201_OK)
     return JsonResponse({'error': 'Invalid request'})
 
-
-
 User = get_user_model()
-
 uid=0
 def reset_password_confirm(request, uidb64, token):
     try:
@@ -991,7 +868,6 @@ def reset_password_confirm(request, uidb64, token):
         user = User.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
-
     if user is not None and default_token_generator.check_token(user, token):        
         return HttpResponseRedirect("https://emotionseo.ai/resetpage")
     else:
@@ -1015,7 +891,6 @@ def confirm_password(request):
             JsonResponse({"message":"again"}, status=status.HTTP_201_CREATED)
         
 stripe.api_key = settings.STRIPE_SECRET_KEY
-
 @csrf_exempt
 def stripe_webhook(request):        
     payload = request.body  
@@ -1028,18 +903,13 @@ def stripe_webhook(request):
         # Get the user and create a new StripeCustomer
         try:
          user = User.objects.get(id=client_reference_id)
-         user.subscriptionid=stripe_subscription_id
-        
+         user.subscriptionid=stripe_subscription_id      
          user.subscribed = True
          user.save()
         except:
          print("Error: Invalid conversion to integer")
-         
-        
-
     return HttpResponse(status=200)
    
-
 class CancelSubscription(APIView):
     #permission_classes = [IsAuthenticated]
     def get(self, request):
@@ -1049,15 +919,9 @@ class CancelSubscription(APIView):
         stripe.Subscription.modify(
             subscription_id,
             cancel_at_period_end=True)
-        user.subscribed=False
-        # user.cancel=True
-        #user.word_number=0
-
-        
+        user.subscribed=False        
         user.save()
         return JsonResponse({"message":"okay"}, status=status.HTTP_200_OK)
-
-
     
 class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
     class InputSerializer(serializers.Serializer):
@@ -1067,16 +931,13 @@ class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
     def get(self, request, *args, **kwargs):
         input_serializer = self.InputSerializer(data=request.GET)
         input_serializer.is_valid(raise_exception=True)
-
         validated_data = input_serializer.validated_data
-
         code = validated_data.get('code')
         error = validated_data.get('error')
         # code = request.query_params.get('code')
         # error = request.query_params.get('error')
 
         login_url = f'{settings.BASE_FRONTEND_URL}'
-
         if error or not code:
             params = urlencode({'error': error})
             return redirect(f'{login_url}?{params}')
@@ -1084,7 +945,6 @@ class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
         redirect_uri = 'https://emotionseo.ai/google'
         access_token = google_get_access_token(code=code,
                                                redirect_uri=redirect_uri)
-
         user_data = google_get_user_info(access_token=access_token)
 
         try:
@@ -1096,13 +956,11 @@ class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
                 'refresh_token': str(refresh_token)
             }
          
-
             return Response(response_data, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             username = user_data['email'].split('@')[0]
             first_name = user_data.get('given_name', '')
             last_name = user_data.get('family_name', '')
-
             user = User.objects.create(
                 username=username,
                 email=user_data['email'],
@@ -1119,31 +977,23 @@ class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
            
-
 def display_stability_image(request):
     # Path to the image file
     image_path = "./v1_txt2img_0.png"
-
     # Open the image file in binary mode
     with open(image_path, "rb") as f:
         image_data = f.read()
-
     # Set the appropriate content type
     response = HttpResponse(image_data, content_type='image/png')
-
     return HttpResponse(image_data, content_type='image/png')
 
 def display_openai_image(request):
-
     image_path = "./a.png"
-
     # Open the image file in binary mode
     with open(image_path, "rb") as f:
         image_data = f.read()
-
     # Set the appropriate content type
     response = HttpResponse(image_data, content_type='image/png')
-
     return HttpResponse(image_data, content_type='image/png')
 
 
