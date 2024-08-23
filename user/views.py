@@ -399,30 +399,12 @@ async def make_request(url, data, headers):
             return await response.text()
 
 @csrf_exempt    
-def generateImageUsingStabilityCaseSpanish(request):
+def generateImageCasePost(request):
     if request.method == 'POST':
         email_info = json.loads(request.body)
         content = email_info.get('content')
-        content=translator(content)
-           
-        string_data = client.images.generate(
-                model="dall-e-3",
-                prompt=content,
-                size="1024x1024",
-                quality="standard",
-                n=1,
-                response_format="b64_json"
-                )
-        # print(response)
+        content=translator(content)          
         
-        string_data=str(string_data)
-        start_index = string_data.find("b64_json=") + len("b64_json=")
-        end_index = string_data.find(",", start_index)
-        b64_json = string_data[start_index:end_index]
-
-
-        with open(f"D:/JCS-image/spain backend/emotion/a.png", "wb") as f:
-                        f.write(base64.b64decode(b64_json))
     
        
         url = "https://api.stability.ai/v1/generation/stable-diffusion-v1-6/text-to-image"
@@ -461,16 +443,14 @@ def generateImageUsingStabilityCaseSpanish(request):
 
 
 @csrf_exempt    
-def generateImageUsingStability(request):
+def generateImageCaseArticle(request):
     if request.method == 'POST':
         email_info = json.loads(request.body)
         content = email_info.get('content')
-        content=summaryArticle(content)
-        
-        
+        content=summaryArticle(content)     
         string_data = client.images.generate(
                 model="dall-e-3",
-                prompt=content1,
+                prompt=content,
                 size="1024x1024",
                 quality="standard",
                 n=1,
@@ -483,7 +463,7 @@ def generateImageUsingStability(request):
         b64_json = string_data[start_index:end_index]
 
 
-        with open(f"D:/JCS-image/spain backend/emotion/a.png", "wb") as f:
+        with open(f"D:/JCS-image/spain backend/emotion/a.png", "wb") as f:  ## Generating Image usng OpenAI
                         f.write(base64.b64decode(b64_json))
     
        
@@ -518,7 +498,7 @@ def generateImageUsingStability(request):
         data = response.json()
 
         for i, image in enumerate(data["artifacts"]):
-                    with open(f"D:/JCS-image/spain backend/emotion/v1_txt2img_{i}.png", "wb") as f:
+                    with open(f"D:/JCS-image/spain backend/emotion/v1_txt2img_{i}.png", "wb") as f:  ## Generating Image usng Stability
                         f.write(base64.b64decode(image["base64"]))
         return JsonResponse({"url":"okay"})                
 
@@ -1140,7 +1120,7 @@ class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
             return Response(response_data, status=status.HTTP_200_OK)
            
 
-def image(request):
+def display_stability_image(request):
     # Path to the image file
     image_path = "./v1_txt2img_0.png"
 
@@ -1153,7 +1133,7 @@ def image(request):
 
     return HttpResponse(image_data, content_type='image/png')
 
-def image1(request):
+def display_openai_image(request):
 
     image_path = "./a.png"
 
