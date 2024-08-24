@@ -132,7 +132,7 @@ def funtionPromptArticleSpanish(title, keyword, emotion, language):
         Escribe las nuevas oraciones en nuevas filas.'''
     return prompt
 
-
+ 
 class RegisterView(generics.GenericAPIView):            
     serializer_class = RegisterSerializer
     def post(self,request):
