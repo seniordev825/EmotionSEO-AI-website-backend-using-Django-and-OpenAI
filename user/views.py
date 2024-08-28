@@ -26,7 +26,7 @@ from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.core.mail import send_mail
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage 
 from xhtml2pdf import pisa
 from django.http import JsonResponse
 from django.contrib.auth.models import User
