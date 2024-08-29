@@ -35,7 +35,7 @@ from django.utils.encoding import force_bytes
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
-import smtplib
+import smtplib  
 import asyncio
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
