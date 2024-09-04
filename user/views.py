@@ -10,7 +10,7 @@ from time import sleep
 from django.conf import settings
 from rest_framework.views import APIView 
 from openai import OpenAI
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny 
 import json
 from urllib.parse import urlencode
 from rest_framework import serializers
