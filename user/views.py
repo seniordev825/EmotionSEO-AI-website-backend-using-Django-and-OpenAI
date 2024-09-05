@@ -342,7 +342,7 @@ class PostView(APIView):                            ## APIView for social media 
              user.save()
              return Response({"message": content}, status=status.HTTP_200_OK)
         
-        elif user.word_number>=user.word_limit:            
+        elif user.word_number>=user.word_limit:             
             user.subscribed=False
             user.word_number=0
             user.save()    
