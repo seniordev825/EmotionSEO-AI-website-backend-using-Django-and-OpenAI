@@ -38,7 +38,7 @@ from django.http import HttpResponse
 import smtplib  
 import asyncio
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from email.mime.multipart import MIMEMultipart 
 from django.template.loader import get_template
 import os
 import datetime
