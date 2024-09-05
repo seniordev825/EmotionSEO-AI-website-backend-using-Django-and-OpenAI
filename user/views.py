@@ -4,7 +4,7 @@ from .serializers import RegisterSerializer,LoginSerializer,LogoutSerializer , U
 from .utiliz import generate_otp, send_otp_email
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-import stripe
+import stripe 
 import aiohttp 
 from time import sleep 
 from django.conf import settings
