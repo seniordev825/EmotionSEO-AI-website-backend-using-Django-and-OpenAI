@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 import stripe 
 import aiohttp 
-from time import sleep 
+from time import sleep  
 from django.conf import settings
 from rest_framework.views import APIView 
 from openai import OpenAI
