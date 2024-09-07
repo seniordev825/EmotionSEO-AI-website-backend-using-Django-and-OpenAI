@@ -71,7 +71,7 @@ def contentChecking(content):
     elif content[-1]=='.':                         ## correct sentence  
       content=content             
     return content
-
+ 
 def functionPromptPostUrlEnglish(subject, url, emotion, language, socialType):
     prompt=f'''Write a post for {socialType} in English. The post must include the site information with {url}. Post should not be too long.
 Write the post to engage your target audience, give advice, provide immediate value, and motivate a specific action, which is essential for effective {socialType} marketing.
