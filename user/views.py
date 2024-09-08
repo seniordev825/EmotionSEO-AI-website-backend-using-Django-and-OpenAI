@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 import json 
 from urllib.parse import urlencode
 from rest_framework import serializers
-from rest_framework.response import Response
+from rest_framework.response import Response 
 from .mixins import PublicApiMixin, ApiErrorsMixin 
 from .utils import google_get_access_token, google_get_user_info, generate_tokens_for_user
 from .models import User
