@@ -4,7 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .manager import UserManager
 # Create your models here.
 import uuid
-class User(AbstractUser):
+class User(AbstractUser): 
     username=models.CharField(db_index=True, max_length=255, unique=True)
     email = models.EmailField(max_length=255, db_index=True, unique=True)
     first_name = models.CharField(max_length=30)
