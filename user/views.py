@@ -55,7 +55,7 @@ def generatingContentByOpenai(prompt):
          model = "gpt-4-1106-preview",
          max_tokens = 1048,
         messages = [
-            {"role": "system", "content": 'You write text based on my prompt.' 
+            {"role": "system", "content": 'You write text based on my prompt.'  
             },
             {"role": "user", "content": prompt},
         ]
