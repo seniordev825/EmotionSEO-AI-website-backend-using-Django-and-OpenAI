@@ -61,7 +61,7 @@ def generatingContentByOpenai(prompt):
         ]
     )
     content = res.choices[0].message.content
-    return content
+    return content 
 
 def contentChecking(content):
     if content[-1]==",":                          ## This means that the last of the sentence is ",".         
