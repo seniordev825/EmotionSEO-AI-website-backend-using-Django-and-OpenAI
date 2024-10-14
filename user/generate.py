@@ -7,7 +7,7 @@ client = OpenAI(api_key = api_key)
 
 
  
-
+  
 prompt = f'''Write text. The text must be SEO-Optmized Content and the text must be included {keywords}
         The text must be written with {emotion}.
         The title of text must be "{title}" and don't change or add anything and write with bigger font than content!
