@@ -7,7 +7,7 @@ from rest_framework_simplejwt.views import (
 from django.conf import settings
 from django.conf.urls.static import static
 
-
+ 
 urlpatterns = [
     path('validate/', views.ValidateOTP.as_view(), name='validate'),
     path('register/',views.RegisterView.as_view(),name="register"),
