@@ -12,7 +12,7 @@ class ApiAuthMixin:
     authentication_classes = (JWTAuthentication, )
     permission_classes = (IsAuthenticated, )
 
-
+ 
 class PublicApiMixin:
     authentication_classes = ()
     permission_classes = ()
