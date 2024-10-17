@@ -7,7 +7,7 @@ import uuid
 class User(AbstractUser): 
     username=models.CharField(db_index=True, max_length=255, unique=True) 
     email = models.EmailField(max_length=255, db_index=True, unique=True)
-    first_name = models.CharField(max_length=30)
+    first_name = models.CharField(max_length=30) 
     last_name = models.CharField(max_length=30)
     otp = models.CharField(max_length=6, null=True, blank=True)
     word_limit=models.IntegerField(default=0)
