@@ -6,7 +6,7 @@ load_dotenv()
 client = OpenAI(api_key = api_key)
 
  
- 
+  
   
 prompt = f'''Write text. The text must be SEO-Optmized Content and the text must be included {keywords}
         The text must be written with {emotion}.
