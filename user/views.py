@@ -42,7 +42,7 @@ from email.mime.multipart import MIMEMultipart
 from django.template.loader import get_template
 import os
 import datetime
-import requests
+import requests 
 import json
 import base64
 from dotenv import load_dotenv 
